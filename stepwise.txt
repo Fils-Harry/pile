@@ -1,0 +1,49 @@
+library(statsmodels)
+
+# Définir une fonction pour la sélection de variables stepwise forward
+stepwise_forward <- function(model, response_variable, data) {
+  current_model <- model
+  best_model <- NULL
+  current_aic <- AIC(model)
+  
+  while (TRUE) {
+    remaining_vars <- setdiff(names(data), attr(current_model$terms, "variables"))
+    aic_values <- numeric()
+    
+    for (var in remaining_vars) {
+      formula <- as.formula(paste(response_variable, "~", paste0(names(current_model$coefficients), collapse = " + "), "+", var))
+      new_model <- glm(formula, data = data, family = gaussian)
+      aic_values <- c(aic_values, AIC(new_model))
+    }
+    
+    best_var <- remaining_vars[which.min(aic_values)]
+    best_aic <- min(aic_values)
+    
+    if (best_aic < current_aic) {
+      current_model <- glm(as.formula(paste(response_variable, "~", paste0(names(current_model$coefficients), collapse = " + "), "+", best_var)), data = data, family = gaussian)
+      current_aic <- best_aic
+    } else {
+      break
+    }
+  }
+  
+  return(current_model)
+}
+
+# Répéter le processus pour 5 data frames et enregistrer les modèles
+for (i in 1:5) {
+  # Remplacez your_data_1, your_data_2, ... par vos 5 jeux de données
+  your_data <- your_data_1  # Par exemple, pour le premier jeu de données
+
+  # Créer un modèle GLM initial avec toutes les variables explicatives
+  initial_model <- glm(response ~ ., data = your_data, family = gaussian)
+  
+  # Appliquer la sélection de variables stepwise forward au modèle initial
+  final_model <- stepwise_forward(initial_model, "response", data = your_data)
+  
+  # Enregistrer le modèle sous le nom model_i où i est l'indice de l'itération
+  assign(paste("model_", i, sep = ""), final_model)
+  
+  # Afficher le résumé du modèle si nécessaire
+  summary(final_model)
+}
