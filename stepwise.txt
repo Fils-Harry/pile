@@ -14,32 +14,18 @@ for i, data in enumerate(dataframes, start=1):
     y = data['response']  # Remplacez 'response' par le nom de votre variable réponse
     X = data.drop(columns=['response'])  # Supprimez la variable réponse des variables explicatives
     
-    selected_vars = []  # Liste pour stocker les variables sélectionnées
+    # Créez votre modèle initial
+    model = sm.OLS(y, X)
     
-    while True:
-        best_aic = float('inf')
-        best_var = None
-        
-        for var in X.columns:
-            candidate_vars = selected_vars + [var]
-            model = sm.GLM(y, sm.add_constant(data[candidate_vars]), family=sm.families.Gaussian())
-            results = model.fit()
-            aic = results.aic
-            
-            if aic < best_aic:
-                best_aic = aic
-                best_var = var
-        
-        if best_var is None:
-            break
-        
-        selected_vars.append(best_var)
+    # Effectuez une sélection de variables stepwise forward (ou backward)
+    result = model.fit().stepwise(method='fwd')  # Utilisez 'bwd' pour backward
     
-    # Créez le modèle final avec les variables sélectionnées
-    final_model = sm.GLM(y, sm.add_constant(data[selected_vars]), family=sm.families.Gaussian())
+    # Obtenez le modèle final
+    final_model = result.model
     
     # Nommez la variable finale en utilisant l'index (1-based)
     final_models[f'final_model_{i}'] = final_model
     
     # Affichez le résumé du modèle final
     print(final_model.summary())
+
