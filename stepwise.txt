@@ -1,13 +1,35 @@
-ifig, ax = plt.subplots(figsize=(10, 8))
-plot_importance(best_model, ax=ax, height=0.5) # Ajustez la hauteur si nécessaire
+library(timeDate)
 
-# Personnalisez le graphique pour une meilleure lisibilité
-ax.set_title('Feature Importance', fontsize=20)
-ax.set_xlabel('F score', fontsize=16)
-ax.set_ylabel('Features', fontsize=16)
-ax.tick_params(axis='y', labelsize=12)  # Ajustez la taille des étiquettes de l'axe y
-ax.tick_params(axis='x', labelsize=12)  # Ajustez la taille des étiquettes de l'axe x
+# Définir une fonction pour calculer le lundi de Pâques (Good Friday est 2 jours avant)
+easterMonday <- function(year) {
+  easter <- as.Date(Easter(year))
+  return(easter - 3)
+}
 
-# Affichez le graphique
-plt.show()
+# Définir une fonction pour calculer le lundi de l'Action de grâce au Canada
+thanksgivingCanada <- function(year) {
+  octoberFirst <- as.Date(paste(year, "-10-01", sep=""))
+  firstMonday <- octoberFirst + (8 - as.POSIXlt(octoberFirst)$wday) %% 7
+  return(firstMonday + 7)
+}
 
+# Générer les jours fériés pour 2018, 2019, 2020
+holidays <- data.frame(
+  New_Year = as.Date(paste0(2018:2020, "-01-01")),
+  After_New_Year = as.Date(paste0(2018:2020, "-01-02")),
+  Family_Day_ON = as.Date(c("2018-02-19", "2019-02-18", "2020-02-17")),  # 3rd Monday in February in Ontario
+  Good_Friday = easterMonday(2018:2020) - 3,
+  Victoria_Day = timeDate::holidayVictoriaDay(2018:2020),
+  St_Jean_Baptiste_QC = as.Date(paste0(2018:2020, "-06-24")),  # Only in Quebec
+  Canada_Day = as.Date(paste0(2018:2020, "-07-01")),
+  Civic_Holiday = as.Date(paste0(2018:2020, "-08-01")) + (7 - as.POSIXlt(paste0(2018:2020, "-08-01"))$wday) %% 7,  # First Monday in August
+  Labour_Day = timeDate::holidayLaborDay(2018:2020),
+  # National reconciliation Holiday - Add manually if applicable
+  Thanksgiving = thanksgivingCanada(2018:2020),
+  # Remembrance Holiday - Add manually if applicable
+  Christmas_Eve = as.Date(paste0(2018:2020, "-12-24")),
+  Christmas = as.Date(paste0(2018:2020, "-12-25")),
+  Boxing_Day = as.Date(paste0(2018:2020, "-12-26"))
+)
+
+print(holidays)
