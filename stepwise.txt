@@ -1,31 +1,13 @@
-import statsmodels.api as sm
+ifig, ax = plt.subplots(figsize=(10, 8))
+plot_importance(best_model, ax=ax, height=0.5) # Ajustez la hauteur si nécessaire
 
-# Liste de vos 5 dataframes, remplacez-les par vos propres dataframes
-dataframes = [your_data_1, your_data_2, your_data_3, your_data_4, your_data_5]
+# Personnalisez le graphique pour une meilleure lisibilité
+ax.set_title('Feature Importance', fontsize=20)
+ax.set_xlabel('F score', fontsize=16)
+ax.set_ylabel('Features', fontsize=16)
+ax.tick_params(axis='y', labelsize=12)  # Ajustez la taille des étiquettes de l'axe y
+ax.tick_params(axis='x', labelsize=12)  # Ajustez la taille des étiquettes de l'axe x
 
-# Dictionnaire pour stocker les modèles finaux
-final_models = {}
-
-# Boucle pour itérer sur les dataframes
-for i, data in enumerate(dataframes, start=1):
-    print(f"Traitement du dataframe {i}...")
-    
-    # Séparez la variable réponse (y) des variables explicatives (X)
-    y = data['response']  # Remplacez 'response' par le nom de votre variable réponse
-    X = data.drop(columns=['response'])  # Supprimez la variable réponse des variables explicatives
-    
-    # Créez votre modèle initial
-    model = sm.OLS(y, X)
-    
-    # Effectuez une sélection de variables stepwise forward (ou backward)
-    result = model.fit().stepwise(method='fwd')  # Utilisez 'bwd' pour backward
-    
-    # Obtenez le modèle final
-    final_model = result.model
-    
-    # Nommez la variable finale en utilisant l'index (1-based)
-    final_models[f'final_model_{i}'] = final_model
-    
-    # Affichez le résumé du modèle final
-    print(final_model.summary())
+# Affichez le graphique
+plt.show()
 
