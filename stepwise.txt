@@ -1,35 +1,19 @@
-library(timeDate)
+data = pd.read_csv('votre_fichier.csv')
+X = data.drop('colonne_cible', axis=1)  # Variables exogènes et temporelles
+y = data['colonne_cible']  # Variable cible
 
-# Définir une fonction pour calculer le lundi de Pâques (Good Friday est 2 jours avant)
-easterMonday <- function(year) {
-  easter <- as.Date(Easter(year))
-  return(easter - 3)
-}
+# Division en ensembles d'entraînement et de test
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Définir une fonction pour calculer le lundi de l'Action de grâce au Canada
-thanksgivingCanada <- function(year) {
-  octoberFirst <- as.Date(paste(year, "-10-01", sep=""))
-  firstMonday <- octoberFirst + (8 - as.POSIXlt(octoberFirst)$wday) %% 7
-  return(firstMonday + 7)
-}
+# Modèle XGBoost
+model = xgb.XGBRegressor(objective ='reg:squarederror', colsample_bytree = 0.3, learning_rate = 0.1,
+                max_depth = 5, alpha = 10, n_estimators = 10)
 
-# Générer les jours fériés pour 2018, 2019, 2020
-holidays <- data.frame(
-  New_Year = as.Date(paste0(2018:2020, "-01-01")),
-  After_New_Year = as.Date(paste0(2018:2020, "-01-02")),
-  Family_Day_ON = as.Date(c("2018-02-19", "2019-02-18", "2020-02-17")),  # 3rd Monday in February in Ontario
-  Good_Friday = easterMonday(2018:2020) - 3,
-  Victoria_Day = timeDate::holidayVictoriaDay(2018:2020),
-  St_Jean_Baptiste_QC = as.Date(paste0(2018:2020, "-06-24")),  # Only in Quebec
-  Canada_Day = as.Date(paste0(2018:2020, "-07-01")),
-  Civic_Holiday = as.Date(paste0(2018:2020, "-08-01")) + (7 - as.POSIXlt(paste0(2018:2020, "-08-01"))$wday) %% 7,  # First Monday in August
-  Labour_Day = timeDate::holidayLaborDay(2018:2020),
-  # National reconciliation Holiday - Add manually if applicable
-  Thanksgiving = thanksgivingCanada(2018:2020),
-  # Remembrance Holiday - Add manually if applicable
-  Christmas_Eve = as.Date(paste0(2018:2020, "-12-24")),
-  Christmas = as.Date(paste0(2018:2020, "-12-25")),
-  Boxing_Day = as.Date(paste0(2018:2020, "-12-26"))
-)
+model.fit(X_train, y_train)
 
-print(holidays)
+# Prédictions
+y_pred = model.predict(X_test)
+
+# Évaluation
+rmse = mean_squared_error(y_test, y_pred, squared=False)
+print("RMSE: %f" % (rmse))
