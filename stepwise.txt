@@ -1,19 +1,38 @@
-data = pd.read_csv('votre_fichier.csv')
-X = data.drop('colonne_cible', axis=1)  # Variables exogènes et temporelles
-y = data['colonne_cible']  # Variable cible
+tss = TimeSeriesSplit(n_splits=5, test_size=24*365*1, gap=24)
+df = df.sort_index()
 
-# Division en ensembles d'entraînement et de test
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Modèle XGBoost
-model = xgb.XGBRegressor(objective ='reg:squarederror', colsample_bytree = 0.3, learning_rate = 0.1,
-                max_depth = 5, alpha = 10, n_estimators = 10)
+fold = 0
+preds = []
+scores = []
+for train_idx, val_idx in tss.split(df):
+    train = df.iloc[train_idx]
+    test = df.iloc[val_idx]
 
-model.fit(X_train, y_train)
+    train = create_features(train)
+    test = create_features(test)
 
-# Prédictions
-y_pred = model.predict(X_test)
+    FEATURES = ['dayofyear', 'hour', 'dayofweek', 'quarter', 'month','year',
+                'lag1','lag2','lag3']
+    TARGET = 'PJME_MW'
 
-# Évaluation
-rmse = mean_squared_error(y_test, y_pred, squared=False)
-print("RMSE: %f" % (rmse))
+    X_train = train[FEATURES]
+    y_train = train[TARGET]
+
+    X_test = test[FEATURES]
+    y_test = test[TARGET]
+
+    reg = xgb.XGBRegressor(base_score=0.5, booster='gbtree',    
+                           n_estimators=1000,
+                           early_stopping_rounds=50,
+                           objective='reg:linear',
+                           max_depth=3,
+                           learning_rate=0.01)
+    reg.fit(X_train, y_train,
+            eval_set=[(X_train, y_train), (X_test, y_test)],
+            verbose=100)
+
+    y_pred = reg.predict(X_test)
+    preds.append(y_pred)
+    score = np.sqrt(mean_squared_error(y_test, y_pred))
+    scores.append(score)
